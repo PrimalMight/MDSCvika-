@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Empty Title</title>
+</head>
+<body>
+    <h2>Prehravac</h2>
+    <form action="/dashPlayer" method="post">
+        <input type="radio" id="local" name="choose" value="file">
+        <label for="local">LOCAL_VIDEO</label><br>
+
+        <input type="radio" id="url1" name="choose" value="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">
+        <label for="url1">URL1</label><br>
+
+        <input type="radio" id="url2" name="choose" value="https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd">
+        <label for="url2">URL2</label><br>
+
+        <input type="radio" id="local-dash" name="choose" value="/dash/manifest.mpd">
+        <label for="url2">LOCAL_DASH_STREAM</label><br>
+
+        <input type="radio" id="local-hls" name="choose" value="/hls/playlist.m3u8">
+        <label for="url2">LOCAL_HLS</label><br>
+
+        <button type="submit">START</button>
+    </form>
+</body>
+</html>
