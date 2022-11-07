@@ -1,6 +1,8 @@
 package mds.streamingserver;
 
-import mds.streamingserver.components.MyResourceHttpRequestHandler;
+import mds.streamingserver.component.MyResourceHttpRequestHandler;
+import mds.streamingserver.model.MovieLibrary;
+import org.jcodec.api.JCodecException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Controller;
@@ -14,70 +16,148 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.util.Objects;
+
+import static mds.streamingserver.FilePath.*;
 
 @Controller
 public class WebController {
 
+    //----------------------------Cviceni 6 - stream----------------------------
+    //----player.html
+    //----videoMP4stream.html
+
+    //Component pro zasílání potřebných částí souboru videa
     private MyResourceHttpRequestHandler handler;
 
+    // Anotace Autowired vytvoří závislost na objektu handler, který je využit v metodě byterange
     @Autowired
-    public WebController(MyResourceHttpRequestHandler handler){
+    public WebController(MyResourceHttpRequestHandler handler) {
         this.handler = handler;
     }
 
-    private final static File MP4_FILE = new File("D:\\MDS\\files\\videos\\bbb_1080p.mp4");
 
-    @PostMapping(value = "/video")
-    public String video(){
-        return "videoMP4";
+    @GetMapping("/video")
+    public String video() {
+        return "videoMP4stream";
     }
-    @ResponseBody
+
+
+    // Vytvoření metody s anotací getMapping, která při dotazu na byterange vrací soubor videa.
+    // Metoda za pomocí objektu HttpServetRequest podporuje byte-range dotazy.
+    // Byte range dotazování umožňuje stahovat soubor "po kouscích" - nevrací tedy celý soubor, ale pouze požadovaný počet bajtů
+    // Lze spustit i ve VLC: http://localhost:8080/byterange
+    @GetMapping("/byterange")
+    public void byterange(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        // Vytvoření požadavku na soubor z proměnné String MP4_FILE
+        request.setAttribute(MyResourceHttpRequestHandler.ATTR_FILE, MP4_FILE);
+
+        handler.handleRequest(request, response);
+    }
+
+
+    // Vytvoření metody s anotací getMapping, která při dotazu na file vrací celý soubor videa.
+    // Anotace GetMapping obsahuje kromě cesty také typ souboru, který poskytuje.
+    // Metoda, která nepodporuje byte-range dotazování.
+    // Vrací celý soubor.
+    // Lze přehrát i ve VLC: http://localhost:8080/file
     @GetMapping(path = "/file", produces = "video/mp4")
+    @ResponseBody
     public FileSystemResource wholeFile() {
         return new FileSystemResource(MP4_FILE);
     }
-    @GetMapping("byterange")
-    public void byterange(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        request.setAttribute(MyResourceHttpRequestHandler.ATTR_FILE, MP4_FILE);
-        handler.handleRequest(request, response);
-    }
-    @GetMapping
-    public String home(){
+    //----------------------------Cviceni 6 - stream----------------------------
+
+
+    //----------------------------Ukol - stream----------------------------
+    //----index.html
+
+
+    //Index stránka s formulářem
+    @GetMapping("/index")
+    public String index() {
         return "index";
     }
-    @RequestMapping(path = "/player", method = {RequestMethod.GET, RequestMethod.POST})
-    public String player(Model model,
-                         @RequestParam String url,
+
+    //Testovací URL
+    //http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
+    //https://ia804503.us.archive.org/15/items/kikTXNL6MvX6ZpRXM/kikTXNL6MvX6ZpRXM.mp4
+    //http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4
+    //http://media.developer.dolby.com/DDP/MP4_HPL40_30fps_channel_id_51.mp4
+
+
+    // Metoda dostává parametry z formuláře pomocí metody POST. Označení name u každé položky input mi předává jejich hodnoty
+    // do stejně pojmenovaných parametrů zde v metodě. Plus je vhodné nastavit některé výchozí hodnoty.
+    // Atributy muted a autoplay fungují tak, že pokud je nechci využít, tak se v elementu nesmí vůbec objevit.
+    // Zde pomůže Thymeleaf, který odstraní atributy s prázdnou hodnotou. Naopak, když je chci použít, tak si zde
+    // vložím nějakou hodnotu. Takže hodnota true zde může obsahovat jakékoliv slovo, obsah je nepodstatný.
+    @RequestMapping(value = "player", method = {RequestMethod.POST})
+    public String player(@RequestParam String url,
                          @RequestParam(defaultValue = "false") boolean muted,
                          @RequestParam(defaultValue = "false") boolean autoplay,
-                         @RequestParam(defaultValue = "1000px") String width) {
-        if(StringUtils.isEmpty((url))) {
-            model.addAttribute("error", "true");
+                         @RequestParam(defaultValue = "1000") String width, //Šířka jako string umožňí zapsat i %, takže můžu definovat velikost v procentech
+                         Model model) {
+
+        if (!StringUtils.isEmpty(url)) {
+            model.addAttribute("url", url);
+            model.addAttribute("width", width);
+            model.addAttribute("muted", muted ? "true" : ""); //zjisteni, zda je true, pokud ano, naplni se string, jinak je prázdný
+            model.addAttribute("autoplay", autoplay); //Autoplay se chová bohužel jinak, ten bere true/false
+            // muted totiž není součástí atributů Thymeleafu, takže pracuje tak, jako bylo řečeno. Pokud je hodnota prázdná,
+            // tak se atribut nevloží, naopak pokud něco obsahuje, tak se vloží.
+            // Kdežto autoplay je součástí Thymeleafu a funguje jako true/false.
+
+            // Nápověda: https://attacomsian.com/blog/thymeleaf-custom-html-attributes
+            // Starší thymeleaf nepoddporoval vlastní názvy atributů a bylo nutné používat th:attr, dnes již funguje
+            // vložení vlastního atributu jako th:moje="${value}", bude ve výsledku zapsán jako moje="David"
+            // pokud model obsahuje atribut value s hodnotou David.
+
+
+            //----------------Druhá možnost jak použít muted a autoplay, pomocí th:attrapend
+//            model.addAttribute("muted", muted ? "true" : "");
+//            model.addAttribute("autoplay", autoplay ? "true" : "");
+
+        } else {
+            model.addAttribute("error", "Nebyla zadána žádná adresa videa!");
+            //Existuje další spousta možností, jak řešit prázdné URL. Například až na straně šablony, či jinak.
         }
-        model.addAttribute("url", url);
-        model.addAttribute("muted", muted ? "true" : "");
-        model.addAttribute("autoplay", autoplay ? "true" : "");
-        model.addAttribute("width",width);
         return "player";
     }
 
-
-    //------------------------------------ ADAPTIVNI STREAM ---------------------------------------------------
-
-    private final static String HLS_PATH = "D:\\MDS\\files\\streams\\HLS\\";
-    private final static String DASH_PATH = "D:\\MDS\\files\\streams\\MPEG-DASH\\";
+    //----------------------------Ukol - stream----------------------------
 
 
+
+
+
+
+
+    //----------------------------Cviceni 7 - adaptivni stream----------------------------
+    //---dashPlayer.html
+
+
+
+    // Vytvoření metody s anotací RequestMapping, která naslouchá na třech adresách a odpovídá pouze na metodu GET
+    // Metoda naslouchá na třech adresách /dash a /hls
+    // Podle předaného názvu souboru vrací daný soubor
+    // Při obdržení dotazu je vytovřen String, kde je předán vzor, který odpovídá adresám v anotaci
+    // Podle vzoru je dále ve switchi přiřazena adresa vedoucí k souborům streamu
+    // Stream HLS potřebuje dvě proměnné, protože jednotlivé streamy jsou uloženy ve složkách odpovídajícím profilu
+    // HLS lze otestovat přes VLC: http://localhost:8080/hls/playlist.m3u8
     @RequestMapping(value = {"/dash/{file}", "/hls/{file}", "/hls/{quality}/{file}"}, method = RequestMethod.GET)
-    public void adaptive_streaming(@PathVariable("file") String file, @PathVariable(value = "quality", required = false) String quality, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
+    public void adaptive_streaming(
+            @PathVariable("file") String file,
+            @PathVariable(value = "quality", required = false) String quality,
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
         File STREAM_FILE = null;
 
+        //Získání patternu z adresy. Vybere takovou, která nejlépe odpovídá (kombinace value u RequestMapping a PathVariable v proměnných)
         String handle = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
 
-        switch (handle){
+        //-----Samostatná práce, napsat switch-----
+        switch (handle) {
             case "/dash/{file}":
                 STREAM_FILE = new File(DASH_PATH + file);
                 break;
@@ -85,28 +165,70 @@ public class WebController {
                 STREAM_FILE = new File(HLS_PATH + file);
                 break;
             case "/hls/{quality}/{file}":
-                STREAM_FILE = new File(HLS_PATH + quality + "\\"+ file);
+                if (!StringUtils.isEmpty(quality)) {
+                    STREAM_FILE = new File(HLS_PATH + quality + "\\" + file);
+                }
                 break;
             default:
-                STREAM_FILE = null;
+                break;
         }
+        //-----Samostatná práce, napsat switch-----
 
         request.setAttribute(MyResourceHttpRequestHandler.ATTR_FILE, STREAM_FILE);
         handler.handleRequest(request, response);
     }
 
+    //----------------------------Cviceni 7 - adaptivni stream----------------------------
 
-    @RequestMapping(value = "dashPlayer", method = {RequestMethod.GET, RequestMethod.POST})
-    public String dashPlayer(Model model, @RequestParam String choose){
-        model.addAttribute("url", choose);
 
+    //----------------------------Ukol - adaptivni stream----------------------------
+    //----index.html - doplnit odkazy/formulář pro výběr zdrojů videa
+    //                  lokální mp4 (file), video z url (http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4)
+    //                  stream z url (https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd)
+    //                  lokální streamy mpeg dash (dash/manifest.mpd) a hls stream (hls/playlist.m3u8)
+    //----dashPlayer.html - upravit, přidat změnu kvality
+
+
+    @RequestMapping(value = "dashPlayer", method = {RequestMethod.POST})
+    public String dashPlayer(Model model, @RequestParam String url) {
+        model.addAttribute("url", url);
+
+        //Type pro vyřešení problémů při přehrávání non dash streamů s controls
+        String type = "stream";
+        if(url.contains(".mpd")) type = "stream";
+        else if (url.contains("hls")) type = "hls";
+        else type = "video";
+
+        model.addAttribute("type", type);
         return "dashPlayer";
     }
 
-    @RequestMapping(value = "gallery", method = {RequestMethod.GET})
-    public String gallery(){
+    private MovieLibrary library;
+
+    @GetMapping("gallery")
+    public String galerie(Model model) throws JCodecException, IOException {
+        if(library == null){
+            library = new MovieLibrary(IMAGES_DIRECTORY, MP4_DIRECTORY, SUFFIX, 150);
+        }
+        model.addAttribute("library", library);
 
         return "gallery";
+    }
+    //----------------------------Ukol - adaptivni stream----------------------------
+
+    @RequestMapping(value = {"/video/{file}"}, method = RequestMethod.GET)
+    public String showVideo(@PathVariable("file") String file, Model model){
+        model.addAttribute("file", file);
+
+        return "video";
+    }
+
+    @RequestMapping(value = {"/getvideo/{file}"}, method = RequestMethod.GET)
+    public void getVideo(HttpServletRequest request, HttpServletResponse response, @PathVariable("file") String file) throws ServletException, IOException {
+
+        request.setAttribute(MyResourceHttpRequestHandler.ATTR_FILE, MP4_DIRECTORY + file);
+
+        handler.handleRequest(request, response);
     }
 
 }

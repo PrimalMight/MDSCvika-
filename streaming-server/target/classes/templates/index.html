@@ -1,28 +1,56 @@
 <!DOCTYPE html>
 <html lang="cs" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Empty Title</title>
+    <meta charset="UTF-8"/>
 </head>
 <body>
-    <h2>Prehravac</h2>
-    <form action="/dashPlayer" method="post">
-        <input type="radio" id="local" name="choose" value="file">
-        <label for="local">LOCAL_VIDEO</label><br>
 
-        <input type="radio" id="url1" name="choose" value="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">
-        <label for="url1">URL1</label><br>
+<form method='post' action='player'>
+    <label for="url"> Video URL</label>
+    <input id="url" type='text' name='url'/><br>
 
-        <input type="radio" id="url2" name="choose" value="https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd">
-        <label for="url2">URL2</label><br>
+    <label for="muted"> Muted</label>
+    <input id="muted" type="checkbox" name='muted'><br>
 
-        <input type="radio" id="local-dash" name="choose" value="/dash/manifest.mpd">
-        <label for="url2">LOCAL_DASH_STREAM</label><br>
+    <label for="autoplay"> Autoplay</label>
+    <input id="autoplay" type="checkbox" name='autoplay'><br>
 
-        <input type="radio" id="local-hls" name="choose" value="/hls/playlist.m3u8">
-        <label for="url2">LOCAL_HLS</label><br>
+    <label for="width"> Video width</label>
+    <input id="width" type='text' name='width'/><br>
 
-        <button type="submit">START</button>
-    </form>
+    <input type='submit' value='Play'/>
+</form>
+
+<br>
+<br>
+
+<form method='post' action='dashPlayer'>
+    <input type="radio" name="url" id="video" value="file">
+    <label for="video">Local video</label><br>
+
+    <input type="radio" name="url" id="urlVideo" value="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">
+    <label for="urlVideo">Internet video</label><br>
+
+    <input type="radio" name="url" id="urlStream" value="https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd">
+    <label for="urlStream">Internet stream</label><br>
+
+    <input type="radio" name="url" id="dashStream" value="dash/manifest.mpd" checked>
+    <label for="dashStream">MPEG-DASH stream</label><br>
+
+    <input type="radio" name="url" id="hlsStream" value="hls/playlist.m3u8">
+    <label for="hlsStream">HLS stream</label><br>
+
+    <input type="submit" value="Play selected stream">
+
+</form>
+
+<br>
+<br>
+
+<form>
+    <button formaction="gallery">Gallery</button>
+</form>
+
+
 </body>
 </html>
