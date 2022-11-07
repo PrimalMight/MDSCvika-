@@ -7,7 +7,7 @@
 </head>
 <body>
 
-  <video th:src="${url}" controls></video>
+  <video th:src="@{'/getvideo/'+${file}}" controls></video>
 
 </body>
 </html>

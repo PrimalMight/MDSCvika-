@@ -226,7 +226,7 @@ public class WebController {
     @RequestMapping(value = {"/getvideo/{file}"}, method = RequestMethod.GET)
     public void getVideo(HttpServletRequest request, HttpServletResponse response, @PathVariable("file") String file) throws ServletException, IOException {
 
-        request.setAttribute(MyResourceHttpRequestHandler.ATTR_FILE, MP4_DIRECTORY + file);
+        request.setAttribute(MyResourceHttpRequestHandler.ATTR_FILE, new File(MP4_DIRECTORY, file));
 
         handler.handleRequest(request, response);
     }
