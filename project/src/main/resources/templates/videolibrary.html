@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Media Gallery</title>
+</head>
+<body>
+    <h1>LIBRARY</h1>
+    <h4 th:if="${urlEmpty == true}">nezadal si url</h4>
+    <h4 th:if="${nameEmpty == true}">nezadal si nazev</h4>
+    <ul th:each="movie: ${library}">
+        <li>
+            <a th:href="@{'player/'+${movie.getURL()}}">
+                <span th:text="${movie.name}"></span>
+            </a>
+        </li>
+    </ul>
+
+</body>
+</html>
