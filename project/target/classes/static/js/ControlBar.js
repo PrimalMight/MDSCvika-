@@ -34,7 +34,7 @@
  * @param {object=} dashjsMediaPlayer - dashjs reference
  * @param {boolean=} displayUTCTimeCodes - true if time is displayed in UTC format, false otherwise
  */
- var ControlBar = function (dashjsMediaPlayer, displayUTCTimeCodes) {
+var ControlBar = function (dashjsMediaPlayer, displayUTCTimeCodes) {
 
     var player = dashjsMediaPlayer;
     var captionMenu = null;
