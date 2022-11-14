@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="cs" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Project - 230536</title>
+    <link rel="stylesheet" th:href="@{/css/myStyle.css}" type="text/css">
+</head>
+<body>
+    <h2>Viktor Buzovský</h2>
+
+    <form method='post' action='video'>
+        <label for="url"> Adresa</label>
+        <input id="url" type='text' name='url'/><br>
+
+        <label for="width"> Sirka videa</label>
+        <input id="width" type="text" name='width'><br>
+
+        <input type='submit' value='Odeslat'/>
+    </form>
+
+    <a href="/videocollection">VIDEO COLLECTION LINK</a>
+</body>
+</html>
